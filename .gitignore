@@ -17,6 +17,7 @@ recordings/*
 node_modules/
 dist/
 .next/
+.next-build/
 out/
 target/
 *.tsbuildinfo
