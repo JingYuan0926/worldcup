@@ -1,0 +1,3 @@
+# Raw recordings are gitignored (large, irreplaceable — back them up out of band).
+# One small sample fixture is force-kept for CI replay tests via the root .gitignore
+# allowlist (recordings/sample/**).
