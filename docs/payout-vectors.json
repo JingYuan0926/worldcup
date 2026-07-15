@@ -1,0 +1,204 @@
+{
+  "_readme": "Shared payout test vectors (README §5.3). Consumed by packages/payout (TS, vitest) AND the Rust Anchor program, so the two implementations can never drift. Stakes/payouts are token base-unit strings (USDT, 6 decimals → 1 USDT = 1000000). ACC(e) = 1000000 / (1 + e*e), integer division. Winners = error <= medianError (even count → lower of the two middle errors). payout = stake + floor(losersPot * weight / totalWeight); weight = stake * ACC(error). All 'handVerified' expected values were computed by hand; note the losersPot*weight product exceeds u64 (needs u128 / BigInt).",
+  "decimals": 6,
+  "vectors": [
+    {
+      "name": "normal",
+      "description": "Mixed errors; 2 winners, 2 losers; exercises u128 product (2e20).",
+      "handVerified": true,
+      "actual": 3,
+      "entries": [
+        { "guess": 3, "stake": "10000000" },
+        { "guess": 2, "stake": "10000000" },
+        { "guess": 5, "stake": "10000000" },
+        { "guess": 8, "stake": "10000000" }
+      ],
+      "expected": {
+        "medianError": 1,
+        "losersPot": "20000000",
+        "vault": "40000000",
+        "totalPayout": "39999999",
+        "dust": "1",
+        "winners": [true, true, false, false],
+        "payouts": ["23333333", "16666666", "0", "0"]
+      }
+    },
+    {
+      "name": "all-tie-exact",
+      "description": "Everyone guesses the actual → all winners, no losers → full refunds.",
+      "handVerified": true,
+      "actual": 2,
+      "entries": [
+        { "guess": 2, "stake": "5000000" },
+        { "guess": 2, "stake": "5000000" },
+        { "guess": 2, "stake": "5000000" }
+      ],
+      "expected": {
+        "medianError": 0,
+        "losersPot": "0",
+        "vault": "15000000",
+        "totalPayout": "15000000",
+        "dust": "0",
+        "winners": [true, true, true],
+        "payouts": ["5000000", "5000000", "5000000"]
+      }
+    },
+    {
+      "name": "all-tie-same-error",
+      "description": "All entries share the same non-zero error → everyone wins → refunds.",
+      "handVerified": true,
+      "actual": 2,
+      "entries": [
+        { "guess": 4, "stake": "3000000" },
+        { "guess": 4, "stake": "7000000" }
+      ],
+      "expected": {
+        "medianError": 2,
+        "losersPot": "0",
+        "vault": "10000000",
+        "totalPayout": "10000000",
+        "dust": "0",
+        "winners": [true, true],
+        "payouts": ["3000000", "7000000"]
+      }
+    },
+    {
+      "name": "single-entry",
+      "description": "Lone entrant is trivially at/below median → refund of stake.",
+      "handVerified": true,
+      "actual": 5,
+      "entries": [{ "guess": 0, "stake": "10000000" }],
+      "expected": {
+        "medianError": 5,
+        "losersPot": "0",
+        "vault": "10000000",
+        "totalPayout": "10000000",
+        "dust": "0",
+        "winners": [true],
+        "payouts": ["10000000"]
+      }
+    },
+    {
+      "name": "median-odd",
+      "description": "5 entries → median is the middle error (index 2).",
+      "handVerified": true,
+      "actual": 0,
+      "entries": [
+        { "guess": 0, "stake": "2000000" },
+        { "guess": 1, "stake": "2000000" },
+        { "guess": 2, "stake": "2000000" },
+        { "guess": 3, "stake": "2000000" },
+        { "guess": 10, "stake": "2000000" }
+      ],
+      "expected": {
+        "medianError": 2,
+        "losersPot": "4000000",
+        "vault": "10000000",
+        "totalPayout": "9999999",
+        "dust": "1",
+        "winners": [true, true, true, false, false],
+        "payouts": ["4352941", "3176470", "2470588", "0", "0"]
+      }
+    },
+    {
+      "name": "median-even-lower",
+      "description": "4 entries → median is the LOWER of the two middle errors (index 1). Tie at median (error==1) is included as a winner.",
+      "handVerified": true,
+      "actual": 0,
+      "entries": [
+        { "guess": 0, "stake": "1000000" },
+        { "guess": 1, "stake": "1000000" },
+        { "guess": 2, "stake": "1000000" },
+        { "guess": 3, "stake": "1000000" }
+      ],
+      "expected": {
+        "medianError": 1,
+        "losersPot": "2000000",
+        "vault": "4000000",
+        "totalPayout": "3999999",
+        "dust": "1",
+        "winners": [true, true, false, false],
+        "payouts": ["2333333", "1666666", "0", "0"]
+      }
+    },
+    {
+      "name": "crowded-vs-lone-exact",
+      "description": "Skill scenario: a lone exact caller (5 USDT) nearly doubles while the crowd (10 USDT each, off by 2) gains less proportionally.",
+      "handVerified": true,
+      "actual": 2,
+      "entries": [
+        { "guess": 2, "stake": "5000000" },
+        { "guess": 4, "stake": "10000000" },
+        { "guess": 4, "stake": "10000000" },
+        { "guess": 4, "stake": "10000000" },
+        { "guess": 9, "stake": "10000000" }
+      ],
+      "expected": {
+        "medianError": 2,
+        "losersPot": "10000000",
+        "vault": "45000000",
+        "totalPayout": "44999997",
+        "dust": "3",
+        "winners": [true, true, true, true, false],
+        "payouts": ["9545454", "11818181", "11818181", "11818181", "0"]
+      }
+    },
+    {
+      "name": "when-never-outcome",
+      "description": "WHEN pool, event never happened → actual bucket = NEVER (20). Late guesses (bucket 18) are less wrong than early ones.",
+      "handVerified": true,
+      "actual": 20,
+      "entries": [
+        { "guess": 20, "stake": "5000000" },
+        { "guess": 18, "stake": "5000000" },
+        { "guess": 5, "stake": "5000000" }
+      ],
+      "expected": {
+        "medianError": 2,
+        "losersPot": "5000000",
+        "vault": "15000000",
+        "totalPayout": "14999999",
+        "dust": "1",
+        "winners": [true, true, false],
+        "payouts": ["9166666", "5833333", "0"]
+      }
+    },
+    {
+      "name": "when-bucket-outcome",
+      "description": "WHEN pool, event in bucket 7. A NEVER guess (20) is very wrong (error 13).",
+      "handVerified": true,
+      "actual": 7,
+      "entries": [
+        { "guess": 7, "stake": "4000000" },
+        { "guess": 8, "stake": "4000000" },
+        { "guess": 20, "stake": "4000000" },
+        { "guess": 0, "stake": "4000000" }
+      ],
+      "expected": {
+        "medianError": 1,
+        "losersPot": "8000000",
+        "vault": "16000000",
+        "totalPayout": "15999999",
+        "dust": "1",
+        "winners": [true, true, false, false],
+        "payouts": ["9333333", "6666666", "0", "0"]
+      }
+    },
+    {
+      "name": "max-entries-all-tie",
+      "description": "MAX_ENTRIES = 64 all guessing the actual → all refunds. Exercises the bound with a known answer.",
+      "handVerified": true,
+      "actual": 3,
+      "generate": { "count": 64, "guess": 3, "stake": "1000000" },
+      "expected": {
+        "medianError": 0,
+        "losersPot": "0",
+        "vault": "64000000",
+        "totalPayout": "64000000",
+        "dust": "0",
+        "allWinners": true,
+        "eachPayout": "1000000"
+      }
+    }
+  ]
+}
