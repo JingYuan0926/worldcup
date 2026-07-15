@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background-color: #f7f9f7;
+  color: #17211b;
+  font-feature-settings: "tnum" 1, "cv01" 1;
+}
+
+/* All numeric readouts (odds, stakes, countdowns) use tabular figures. */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Thin, quiet scrollbars for the light workspace. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c8d2cc;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Pitch stripes used behind the timeline canvas. */
+.pitch-stripes {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(20, 122, 70, 0.045) 0px,
+    rgba(20, 122, 70, 0.045) 40px,
+    rgba(20, 122, 70, 0.018) 40px,
+    rgba(20, 122, 70, 0.018) 80px
+  );
+}
+
+/* The timeline is a full-screen light workspace; remove hidden dark-site
+   chrome from both the visual and keyboard/accessibility trees on this route. */
+body:has(.match-page) > header,
+body:has(.match-page) > footer {
+  display: none;
+}
+
+body:has(.match-page) > main {
+  max-width: none;
+  padding: 0;
+}
+
+.match-timeline-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+.match-timeline-scroll {
+  scrollbar-color: #cbd5e1 transparent;
+}
