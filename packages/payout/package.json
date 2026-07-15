@@ -1,0 +1,21 @@
+{
+  "name": "@exact-match/payout",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic, integer-only median-error payout math (README §5.3). The single TS implementation; mirrored byte-for-byte in Rust against docs/payout-vectors.json.",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

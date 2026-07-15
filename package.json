@@ -1,0 +1,28 @@
+{
+  "name": "exact-match",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Precision prediction pools for the 2026 World Cup, settled trustlessly by TxLINE Merkle proofs on Solana.",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "services/ingest",
+    "services/settler",
+    "web"
+  ],
+  "scripts": {
+    "auth": "npm run auth --workspace services/ingest",
+    "record": "npm run record --workspace services/ingest",
+    "auto-record": "npm run auto-record --workspace services/ingest",
+    "replay": "npm run replay --workspace services/ingest",
+    "test": "npm test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "overrides": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  }
+}

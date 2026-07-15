@@ -1,0 +1,41 @@
+{
+  "name": "@exact-match/ingest",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "TxLINE auth, SSE recorder + replayer, and websocket fan-out for Exact Match.",
+  "bin": {
+    "em-auth": "./src/cli/auth.ts",
+    "em-record": "./src/cli/record.ts"
+  },
+  "scripts": {
+    "auth": "tsx src/cli/auth.ts",
+    "record": "tsx src/cli/record.ts",
+    "replay": "tsx src/cli/replay.ts",
+    "serve": "tsx src/cli/serve.ts",
+    "materialize": "tsx src/cli/materialize.ts",
+    "probe": "tsx src/cli/probe.ts",
+    "proof-roundtrip": "tsx src/cli/proof-roundtrip.ts",
+    "backfill": "tsx src/cli/backfill.ts",
+    "auto-record": "tsx src/cli/auto-record.ts",
+    "test": "node --import tsx --test src/auto-record-plan.test.ts src/ingest/materialize-state.test.ts src/sse/transcript.test.ts",
+    "test:auto-record": "node --import tsx --test src/auto-record-plan.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0",
+    "bn.js": "^5.2.1",
+    "dotenv": "^16.4.7",
+    "tweetnacl": "^1.0.3",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.6",
+    "@types/node": "^22.10.5",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

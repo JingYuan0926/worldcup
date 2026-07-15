@@ -1,0 +1,40 @@
+# secrets & wallets
+.env
+.env.*
+!.env.example
+*.keypair.json
+keypairs/
+.tokens/
+
+# raw recordings are irreplaceable but large & gitignored;
+# a single sample fixture is force-kept for CI replay tests (see recordings/.gitignore)
+recordings/*
+!recordings/.gitignore
+!recordings/sample/
+!recordings/sample/**
+
+# deps & build
+node_modules/
+dist/
+.next/
+out/
+target/
+*.tsbuildinfo
+coverage/
+.turbo/
+.cache/
+.vercel/
+
+# misc
+.DS_Store
+*.log
+*.pid
+*.swp
+
+# local development-agent state
+.claude/settings.local.json
+.agents/
+.codex/
+
+# installed macOS service (contains machine-specific absolute paths)
+services/ingest/launchd/com.exactmatch.txline-auto-record.plist

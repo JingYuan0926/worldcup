@@ -1,0 +1,26 @@
+{
+  "name": "@exact-match/settler",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Permissionless phase-watcher + proof-fetcher + settle/refund crank. Reuses the shared TxLINE modules in services/ingest.",
+  "scripts": {
+    "settle": "tsx src/cli/settle.ts",
+    "bootstrap": "tsx src/cli/bootstrap.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@exact-match/payout": "*",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0",
+    "bn.js": "^5.2.1",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.6",
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

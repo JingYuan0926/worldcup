@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    // rootDir is repo root: the settler reuses the shared TxLINE modules in
+    // services/ingest/src via relative imports, so the compilation's source set
+    // spans sibling workspaces. (Widened from "." — a "." rootDir makes any
+    // ingest import fail TS6059. tsx/--noEmit ignore the emit layout.)
+    "rootDir": "../..",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"]
+}
