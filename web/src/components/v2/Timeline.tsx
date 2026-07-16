@@ -115,6 +115,17 @@ export function Timeline({
     return out;
   }, []);
 
+  /**
+   * Anything anchored at 0' or 120' would lose half its box off the edge of the
+   * canvas under a plain -50% centring, which clipped "KICK OFF" to "OFF". Pin
+   * the first and last to their inside edge instead.
+   */
+  const edgeShift = (second: number): string => {
+    if (second <= 0) return "translateX(0)";
+    if (second >= MATCH_SECONDS) return "translateX(-100%)";
+    return "translateX(-50%)";
+  };
+
   const selected = markers.find((m) => m.id === selectedId) ?? null;
   const pins = MATCH_EVENTS.slice(0, revealed);
 
@@ -204,7 +215,7 @@ export function Timeline({
                       position: "absolute",
                       left: `${pctOf(tk.second)}%`,
                       top: 15,
-                      transform: "translateX(-50%)",
+                      transform: edgeShift(tk.second),
                       fontSize: 10,
                       color: C.muted,
                     }}
@@ -219,7 +230,7 @@ export function Timeline({
                     position: "absolute",
                     left: `${pctOf(p.second)}%`,
                     top: "50%",
-                    transform: "translate(-50%, -50%)",
+                    transform: `${edgeShift(p.second)} translateY(-50%)`,
                     fontSize: 8.5,
                     fontWeight: 700,
                     letterSpacing: "0.09em",
@@ -358,7 +369,7 @@ export function Timeline({
                     position: "absolute",
                     top: 3,
                     left: 0,
-                    transform: "translateX(-50%)",
+                    transform: edgeShift(now),
                     fontSize: 10,
                     fontWeight: 700,
                     color: C.white,
