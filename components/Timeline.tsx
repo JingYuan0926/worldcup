@@ -63,7 +63,15 @@ interface Props {
  * node each, so zooming in resolves individual seconds and zooming out clusters
  * them into a dense texture. Height is normalised to the lane's own peak.
  */
-function CrowdLane({ counts, color }: { counts: number[]; color: string }) {
+function CrowdLane({
+  counts,
+  binSeconds,
+  color,
+}: {
+  counts: number[];
+  binSeconds: number;
+  color: string;
+}) {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -81,21 +89,31 @@ function CrowdLane({ counts, color }: { counts: number[]; color: string }) {
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       ctx.clearRect(0, 0, rect.width, rect.height);
 
-      let max = 1;
-      for (const c of counts) if (c > max) max = c;
+      // Aggregate the per-second picks into candles of `binSeconds` each — one
+      // contiguous bar per window (the same range the hover reports), so the lane
+      // fills instead of scattering into thin per-second slivers with gaps.
       const n = counts.length;
-      const step = rect.width / Math.max(1, n - 1);
-      const barW = Math.max(0.7, Math.min(2.4, step));
+      const bin = Math.max(1, Math.round(binSeconds));
+      const bins = Math.max(1, Math.ceil(n / bin));
+      const agg = new Array<number>(bins).fill(0);
+      for (let s = 0; s < n; s++) {
+        const c = counts[s]!;
+        if (c > 0) agg[Math.floor(s / bin)]! += c;
+      }
+      let max = 1;
+      for (const v of agg) if (v > max) max = v;
+
+      const slotW = rect.width / bins;
+      const barW = Math.max(1, slotW - Math.min(1.5, slotW * 0.18));
       const usable = rect.height * 0.92;
 
       ctx.globalAlpha = 0.5;
       ctx.fillStyle = color;
-      for (let s = 0; s < n; s++) {
-        const c = counts[s]!;
-        if (c <= 0) continue;
-        const h = Math.max(2, (c / max) * usable);
-        const x = Math.min(rect.width - barW, s * step);
-        ctx.fillRect(x, rect.height - h, barW, h);
+      for (let b = 0; b < bins; b++) {
+        const v = agg[b]!;
+        if (v <= 0) continue;
+        const h = Math.max(2, (v / max) * usable);
+        ctx.fillRect(b * slotW, rect.height - h, barW, h);
       }
     };
 
@@ -103,7 +121,7 @@ function CrowdLane({ counts, color }: { counts: number[]; color: string }) {
     const ro = new ResizeObserver(draw);
     ro.observe(canvas);
     return () => ro.disconnect();
-  }, [counts, color]);
+  }, [counts, binSeconds, color]);
 
   return (
     <canvas
@@ -329,6 +347,7 @@ export function Timeline({
                 >
                   <CrowdLane
                     counts={side === "home" ? crowd.home.count : crowd.away.count}
+                    binSeconds={hoverWindow}
                     color={t.color}
                   />
                 </div>
