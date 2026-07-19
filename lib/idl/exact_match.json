@@ -1,0 +1,1178 @@
+{
+  "address": "9KKWfU1EB51EmBoiTusZ3J7h7b6JmHNa2aQujtJdZBen",
+  "metadata": {
+    "name": "exact_match",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Exact Match — precision prediction pools, settled trustlessly"
+  },
+  "instructions": [
+    {
+      "name": "claim",
+      "docs": [
+        "Recompute this entrant's payout from `entries + actual` and pay it out.",
+        "",
+        "Nothing is stored at settle time: the split is derived here, every time, so",
+        "a stored number can never disagree with README §5.3."
+      ],
+      "discriminator": [
+        62,
+        198,
+        214,
+        193,
+        213,
+        159,
+        108,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.fixture_id",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_index",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "pool"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "user_token",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_pool",
+      "docs": [
+        "Permissionless. Pool parameters are fixed at creation, forever."
+      ],
+      "discriminator": [
+        233,
+        146,
+        209,
+        142,
+        207,
+        104,
+        64,
+        188
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "fixture_id"
+              },
+              {
+                "kind": "arg",
+                "path": "pool_index"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "fixture_id",
+          "type": "i64"
+        },
+        {
+          "name": "pool_index",
+          "type": "u8"
+        },
+        {
+          "name": "stat_key_a",
+          "type": "u32"
+        },
+        {
+          "name": "stat_key_b",
+          "type": "u32"
+        },
+        {
+          "name": "op",
+          "type": "u8"
+        },
+        {
+          "name": "lock_ts",
+          "type": "i64"
+        },
+        {
+          "name": "settle_phase",
+          "type": "u8"
+        },
+        {
+          "name": "slider_min",
+          "type": "i32"
+        },
+        {
+          "name": "slider_max",
+          "type": "i32"
+        },
+        {
+          "name": "resolver",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "enter",
+      "docs": [
+        "Enter a pool before kickoff. One entry per wallet per pool (README §5.2)."
+      ],
+      "discriminator": [
+        139,
+        49,
+        209,
+        114,
+        88,
+        91,
+        77,
+        134
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.fixture_id",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_index",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "pool"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "user_token",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "guess",
+          "type": "i32"
+        },
+        {
+          "name": "stake",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "refund",
+      "docs": [
+        "Stake back, if the pool never settled by its deadline. Permissionless —",
+        "this is what stops the `resolver` holding funds hostage by inaction."
+      ],
+      "discriminator": [
+        2,
+        96,
+        183,
+        251,
+        63,
+        208,
+        46,
+        46
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.fixture_id",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_index",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "pool"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "user_token",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "settle",
+      "docs": [
+        "Record the settled outcome. See the trust-model note at the top of this file:",
+        "this is the one instruction still gated by `resolver`, and the CPI into",
+        "`txoracle::validate_stat` replaces that gate wholesale.",
+        "",
+        "`claimed_actual` is the settled value: for COUNT pools the stat total, for",
+        "WHEN pools the 5-minute bucket index (NEVER = 20)."
+      ],
+      "discriminator": [
+        175,
+        42,
+        185,
+        87,
+        144,
+        131,
+        102,
+        212
+      ],
+      "accounts": [
+        {
+          "name": "resolver",
+          "docs": [
+            "Temporary — replaced by the `validate_stat` CPI (trust-model note above)."
+          ],
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.fixture_id",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_index",
+                "account": "Pool"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "claimed_actual",
+          "type": "i32"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Pool",
+      "discriminator": [
+        241,
+        154,
+        109,
+        4,
+        17,
+        177,
+        109,
+        188
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "Claimed",
+      "discriminator": [
+        217,
+        192,
+        123,
+        72,
+        108,
+        150,
+        248,
+        33
+      ]
+    },
+    {
+      "name": "Entered",
+      "discriminator": [
+        247,
+        164,
+        21,
+        222,
+        219,
+        178,
+        237,
+        160
+      ]
+    },
+    {
+      "name": "PoolCreated",
+      "discriminator": [
+        202,
+        44,
+        41,
+        88,
+        104,
+        220,
+        157,
+        82
+      ]
+    },
+    {
+      "name": "Refunded",
+      "discriminator": [
+        35,
+        103,
+        149,
+        246,
+        196,
+        123,
+        221,
+        99
+      ]
+    },
+    {
+      "name": "SettledEvent",
+      "discriminator": [
+        117,
+        207,
+        196,
+        174,
+        197,
+        200,
+        11,
+        67
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidRange",
+      "msg": "slider_min must be < slider_max and within the bucket range"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidStatSpec",
+      "msg": "invalid stat specification"
+    },
+    {
+      "code": 6002,
+      "name": "PoolNotOpen",
+      "msg": "pool is not open"
+    },
+    {
+      "code": 6003,
+      "name": "PoolLocked",
+      "msg": "entries closed at kickoff"
+    },
+    {
+      "code": 6004,
+      "name": "GuessOutOfRange",
+      "msg": "guess outside the pool's range"
+    },
+    {
+      "code": 6005,
+      "name": "StakeOutOfRange",
+      "msg": "stake must be 1-100 USDC"
+    },
+    {
+      "code": 6006,
+      "name": "PoolFull",
+      "msg": "pool is full"
+    },
+    {
+      "code": 6007,
+      "name": "AlreadyEntered",
+      "msg": "this wallet already entered"
+    },
+    {
+      "code": 6008,
+      "name": "AlreadySettled",
+      "msg": "pool already settled"
+    },
+    {
+      "code": 6009,
+      "name": "NotYetLocked",
+      "msg": "pool has not locked yet"
+    },
+    {
+      "code": 6010,
+      "name": "ActualOutOfRange",
+      "msg": "settled value outside the pool's range"
+    },
+    {
+      "code": 6011,
+      "name": "NotSettled",
+      "msg": "pool is not settled"
+    },
+    {
+      "code": 6012,
+      "name": "NotAnEntrant",
+      "msg": "wallet has no entry in this pool"
+    },
+    {
+      "code": 6013,
+      "name": "AlreadyClaimed",
+      "msg": "already claimed"
+    },
+    {
+      "code": 6014,
+      "name": "DeadlineNotPassed",
+      "msg": "settle deadline has not passed"
+    },
+    {
+      "code": 6015,
+      "name": "NotResolver",
+      "msg": "signer is not this pool's resolver"
+    },
+    {
+      "code": 6016,
+      "name": "WrongMint",
+      "msg": "wrong mint for this pool"
+    },
+    {
+      "code": 6017,
+      "name": "VaultUnderflow",
+      "msg": "vault cannot cover this payout"
+    },
+    {
+      "code": 6018,
+      "name": "MathOverflow",
+      "msg": "arithmetic overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "Claimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "payout",
+            "type": "u64"
+          },
+          {
+            "name": "error",
+            "type": "u32"
+          },
+          {
+            "name": "is_winner",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Entered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "guess",
+            "type": "i32"
+          },
+          {
+            "name": "stake",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Entry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "guess",
+            "type": "i32"
+          },
+          {
+            "name": "stake",
+            "type": "u64"
+          },
+          {
+            "name": "claimed",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Pool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fixture_id",
+            "type": "i64"
+          },
+          {
+            "name": "pool_index",
+            "type": "u8"
+          },
+          {
+            "name": "stat_key_a",
+            "type": "u32"
+          },
+          {
+            "name": "stat_key_b",
+            "type": "u32"
+          },
+          {
+            "name": "op",
+            "type": "u8"
+          },
+          {
+            "name": "lock_ts",
+            "type": "i64"
+          },
+          {
+            "name": "settle_phase",
+            "type": "u8"
+          },
+          {
+            "name": "settle_deadline_ts",
+            "type": "i64"
+          },
+          {
+            "name": "slider_min",
+            "type": "i32"
+          },
+          {
+            "name": "slider_max",
+            "type": "i32"
+          },
+          {
+            "name": "state",
+            "type": "u8"
+          },
+          {
+            "name": "actual",
+            "type": "i32"
+          },
+          {
+            "name": "resolver",
+            "docs": [
+              "Temporary settle gate — see the trust-model note at the top of this file."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "docs": [
+              "The escrow asset. Fixed at creation; every entry and payout uses it."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "total_staked",
+            "docs": [
+              "Token base units owed to entrants."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "entries",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Entry"
+                }
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "fixture_id",
+            "type": "i64"
+          },
+          {
+            "name": "pool_index",
+            "type": "u8"
+          },
+          {
+            "name": "lock_ts",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Refunded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "stake",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SettledEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "actual",
+            "type": "i32"
+          }
+        ]
+      }
+    }
+  ]
+}

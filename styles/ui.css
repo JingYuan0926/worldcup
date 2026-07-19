@@ -1,0 +1,141 @@
+/* Scoped chrome for the v2 shell.
+   Every rule is guarded by :has(.v2-root) so importing this file can never
+   affect the existing routes, which keep their own header/footer/main. */
+
+body:has(.v2-root) > header,
+body:has(.v2-root) > footer {
+  display: none;
+}
+
+body:has(.v2-root) > main {
+  max-width: none;
+  padding: 0;
+}
+
+body:has(.v2-root) {
+  background-color: #0a0e2c;
+}
+
+.v2-root a {
+  color: #16181d;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.v2-root a:hover {
+  color: #000;
+}
+.v2-root button {
+  cursor: pointer;
+  font-family: inherit;
+}
+.v2-root input {
+  font-family: inherit;
+}
+.v2-root input:focus-visible,
+.v2-root button:focus-visible {
+  outline: 2px solid #16181d;
+  outline-offset: 1px;
+}
+
+.v2-scroll::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+.v2-scroll::-webkit-scrollbar-thumb {
+  background: #c3c8d0;
+  border-radius: 5px;
+}
+.v2-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.v2-scroll-hide::-webkit-scrollbar {
+  display: none;
+}
+.v2-scroll-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes v2-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+@keyframes v2-land {
+  0% {
+    transform: translate(-50%, -24px) scale(1.7);
+    opacity: 0;
+  }
+  60% {
+    transform: translate(-50%, 2px) scale(1);
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes v2-pop-in {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes v2-drop-in {
+  0% {
+    transform: translateX(48px);
+    opacity: 0;
+  }
+  60% {
+    transform: translateX(-4px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes v2-sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes v2-vault-l {
+  from {
+    transform: translateX(-105%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes v2-vault-r {
+  from {
+    transform: translateX(105%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-root *,
+  .v2-root *::before,
+  .v2-root *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

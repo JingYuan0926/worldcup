@@ -39,3 +39,10 @@ coverage/
 
 # installed macOS service (contains machine-specific absolute paths)
 services/ingest/launchd/com.exactmatch.txline-auto-record.plist
+
+# frontend (derek merge): generated + demo/runtime artifacts
+next-env.d.ts
+.usdc-mint.json
+.demo-state.json
+public/game.mov
+program/.anchor/
