@@ -168,16 +168,18 @@ export function MatchScreen() {
    */
   const crowd = useMemo(() => {
     const empty = () => Array.from({ length: NEVER_BUCKET }, () => 0);
-    const out = { home: empty(), away: empty() };
+    const stake = { home: empty(), away: empty() };
+    const count = { home: empty(), away: empty() };
     for (const gp of GOAL_POOLS) {
       const pool = pools[gp.poolIndex];
       if (!pool) continue;
       for (const e of pool.entries) {
         if (e.guess < 0 || e.guess >= NEVER_BUCKET) continue;
-        out[gp.side][e.guess] += e.stake;
+        stake[gp.side][e.guess] += e.stake;
+        count[gp.side][e.guess] += 1; // one entry = one bettor
       }
     }
-    return out;
+    return { stake, count };
   }, [pools]);
 
   /**
@@ -187,9 +189,21 @@ export function MatchScreen() {
    * the shape on both lanes.
    */
   const displayCrowd = useMemo(() => {
-    const goalHasStake = crowd.home.some((v) => v > 0) || crowd.away.some((v) => v > 0);
-    if (tool === "goal" && goalHasStake) return crowd;
+    const hasStake = crowd.stake.home.some((v) => v > 0) || crowd.stake.away.some((v) => v > 0);
+    if (tool === "goal" && hasStake) return crowd.stake;
     return { home: eventCrowd(tool, "home"), away: eventCrowd(tool, "away") };
+  }, [tool, crowd]);
+
+  /**
+   * Bettor counts aligned with displayCrowd — real entry counts for goals, and a
+   * plausible count derived from the simulated stake (~18 USDC/person) for the
+   * corner/card tools that have no pools.
+   */
+  const displayCounts = useMemo(() => {
+    const hasStake = crowd.stake.home.some((v) => v > 0) || crowd.stake.away.some((v) => v > 0);
+    if (tool === "goal" && hasStake) return crowd.count;
+    const derive = (side: Side) => eventCrowd(tool, side).map((s) => Math.round(s / 18e6));
+    return { home: derive("home"), away: derive("away") };
   }, [tool, crowd]);
 
   /**
@@ -441,6 +455,7 @@ export function MatchScreen() {
       now={liveNow}
       revealed={revealed}
       crowd={displayCrowd}
+      counts={displayCounts}
       overlay={overlay}
     />
   );

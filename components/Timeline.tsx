@@ -49,6 +49,8 @@ interface Props {
   revealed: number;
   /** Staked lamports per 5-minute bucket, per lane — read from the pools on-chain. */
   crowd: { home: number[]; away: number[] };
+  /** Distinct bettors per 5-minute bucket, per lane. */
+  counts: { home: number[]; away: number[] };
   /**
    * Laid over the video rather than on the page. The canvas surfaces defer to
    * the strip's own background, the outer frame goes, and the labels darken —
@@ -166,6 +168,7 @@ export function Timeline({
   now,
   revealed,
   crowd,
+  counts,
   overlay = false,
 }: Props) {
   const [zoom, setZoom] = useState(1);
@@ -232,7 +235,80 @@ export function Timeline({
   const pins = MATCH_EVENTS.slice(0, revealed);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 14 }}>
+      {hover &&
+        (() => {
+          const b = bucketOf(hover.second);
+          const rows = [
+            { tm: HOME, stake: crowd.home[b] ?? 0, ppl: counts.home[b] ?? 0 },
+            { tm: AWAY, stake: crowd.away[b] ?? 0, ppl: counts.away[b] ?? 0 },
+          ];
+          const totStake = rows.reduce((s, r) => s + r.stake, 0);
+          const totPpl = rows.reduce((s, r) => s + r.ppl, 0);
+          const usd = (base: number) => {
+            const u = base / 1e6;
+            return u >= 100 ? Math.round(u).toLocaleString() : u.toFixed(2);
+          };
+          return (
+            <div
+              style={{
+                position: "absolute",
+                top: 8,
+                right: 102,
+                zIndex: 9,
+                pointerEvents: "none",
+                background: C.white,
+                border: `1px solid ${C.line}`,
+                borderRadius: 10,
+                padding: "10px 12px",
+                minWidth: 196,
+                boxShadow: "0 10px 30px rgba(2,6,23,0.16)",
+                color: C.ink,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
+                <span style={{ ...num, fontSize: 15, fontWeight: 700 }}>{mmss(hover.second)}</span>
+                <span style={{ ...num, fontSize: 10, color: C.muted }}>{bucketLabel(b)} window</span>
+              </div>
+              {rows.map(({ tm, stake, ppl }) => (
+                <div
+                  key={tm.code}
+                  style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={tm.flag}
+                    alt={tm.code}
+                    width={18}
+                    height={12}
+                    style={{ borderRadius: 2, boxShadow: "0 0 0 1px rgba(22,24,29,0.12)", flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: tm.color, width: 34 }}>
+                    {tm.code}
+                  </span>
+                  <span style={{ ...num, fontSize: 11, color: C.muted, flex: 1 }}>{ppl} bet</span>
+                  <span style={{ ...num, fontSize: 12.5, fontWeight: 700 }}>{usd(stake)}</span>
+                </div>
+              ))}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  borderTop: `1px solid ${C.line2}`,
+                  marginTop: 6,
+                  paddingTop: 6,
+                }}
+              >
+                <span style={{ fontSize: 11.5, fontWeight: 700, flex: 1 }}>Total</span>
+                <span style={{ ...num, fontSize: 11, color: C.muted }}>{totPpl} bet</span>
+                <span style={{ ...num, fontSize: 12.5, fontWeight: 800, marginLeft: 10 }}>
+                  {usd(totStake)} USDC
+                </span>
+              </div>
+            </div>
+          );
+        })()}
       <div
         style={{
           display: "flex",
@@ -505,108 +581,21 @@ export function Timeline({
               </div>
             )}
 
-            {/*
-              Hover readout: how much the crowd staked in the window under the
-              cursor, split by lane (top = home, bottom = away) plus the total.
-            */}
-            {hover &&
-              (() => {
-                const b = bucketOf(hover.second);
-                const h = crowd.home[b] ?? 0;
-                const a = crowd.away[b] ?? 0;
-                const total = h + a;
-                const fmt = (base: number) => {
-                  const u = base / 1e6;
-                  return u >= 100 ? Math.round(u).toLocaleString() : u.toFixed(2);
-                };
-                return (
-                  <>
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        bottom: 0,
-                        left: hover.px,
-                        width: 1,
-                        background: overlay ? C.ink2 : C.faint,
-                        pointerEvents: "none",
-                        zIndex: 6,
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: hover.px,
-                        top: 6,
-                        transform:
-                          hover.px > 190 ? "translateX(calc(-100% - 10px))" : "translateX(10px)",
-                        zIndex: 9,
-                        pointerEvents: "none",
-                        background: C.ink,
-                        color: C.white,
-                        borderRadius: 8,
-                        padding: "9px 11px",
-                        minWidth: 138,
-                        boxShadow: "0 10px 26px rgba(2,6,23,0.4)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          ...num,
-                          fontSize: 10.5,
-                          fontWeight: 700,
-                          opacity: 0.7,
-                          letterSpacing: "0.04em",
-                          marginBottom: 6,
-                        }}
-                      >
-                        {bucketLabel(b)}
-                      </div>
-                      {(
-                        [
-                          [HOME, h],
-                          [AWAY, a],
-                        ] as const
-                      ).map(([tm, v]) => (
-                        <div
-                          key={tm.code}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 14,
-                            fontSize: 11.5,
-                            marginBottom: 3,
-                          }}
-                        >
-                          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <span
-                              style={{ width: 7, height: 7, borderRadius: "50%", background: tm.color }}
-                            />
-                            {tm.code}
-                          </span>
-                          <span style={{ ...num, fontWeight: 700 }}>{fmt(v)}</span>
-                        </div>
-                      ))}
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: 14,
-                          fontSize: 11.5,
-                          borderTop: "1px solid rgba(255,255,255,0.16)",
-                          marginTop: 5,
-                          paddingTop: 5,
-                        }}
-                      >
-                        <span style={{ opacity: 0.75 }}>Total</span>
-                        <span style={{ ...num, fontWeight: 800 }}>{fmt(total)} USDC</span>
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
+            {/* Guide line at the cursor; the readout itself is pinned top-right. */}
+            {hover && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  bottom: 0,
+                  left: hover.px,
+                  width: 1,
+                  background: overlay ? C.ink2 : C.faint,
+                  pointerEvents: "none",
+                  zIndex: 6,
+                }}
+              />
+            )}
           </div>
         </div>
 
