@@ -1,0 +1,9 @@
+{
+  "fixtureId": 18257865,
+  "network": "devnet",
+  "startedAt": "2026-07-18T20:30:08.935Z",
+  "streams": {
+    "scores": "https://txline-dev.txodds.com/api/scores/stream?fixtureId=18257865",
+    "odds": "https://txline-dev.txodds.com/api/odds/stream?fixtureId=18257865"
+  }
+}
