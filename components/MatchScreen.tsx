@@ -13,6 +13,7 @@ import { usePools } from "@/lib/usePools";
 import { FlashMarket } from "@/components/FlashMarket";
 import { useDemo } from "@/lib/useDemo";
 import { FLASH_DROP_SECOND, FLASH_POOL, GOAL_POOLS, NEVER_BUCKET, bucketRange } from "@/lib/pools";
+import { eventCrowd } from "@/lib/crowdSim";
 import {
   AWAY,
   FIXTURE,
@@ -178,6 +179,18 @@ export function MatchScreen() {
     }
     return out;
   }, [pools]);
+
+  /**
+   * The crowd curve follows the selected tool. Goals show the real on-chain
+   * staked crowd; corners and cards have no pools, so their "when people bet"
+   * curve is a deterministic simulation (lib/crowdSim.ts). Switching a tool swaps
+   * the shape on both lanes.
+   */
+  const displayCrowd = useMemo(() => {
+    const goalHasStake = crowd.home.some((v) => v > 0) || crowd.away.some((v) => v > 0);
+    if (tool === "goal" && goalHasStake) return crowd;
+    return { home: eventCrowd(tool, "home"), away: eventCrowd(tool, "away") };
+  }, [tool, crowd]);
 
   /**
    * The DEMO switcher is not just a view toggle any more — it drives the chain.
@@ -427,7 +440,7 @@ export function MatchScreen() {
       onSelect={setSelectedId}
       now={liveNow}
       revealed={revealed}
-      crowd={crowd}
+      crowd={displayCrowd}
       overlay={overlay}
     />
   );
