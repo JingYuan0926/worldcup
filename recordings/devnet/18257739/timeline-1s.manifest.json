@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "fixtureId": 18257739,
   "network": "devnet",
-  "generatedAt": "2026-07-19T23:45:17.481Z",
+  "generatedAt": "2026-07-19T23:48:47.433Z",
   "method": "field-wise cumulative action frames, then one-second last observation carried forward",
   "sources": [
     "recordings/devnet/18257739/scores.ndjson"
