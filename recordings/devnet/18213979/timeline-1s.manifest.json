@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": 18213979,
+  "network": "devnet",
+  "generatedAt": "2026-07-14T16:13:34.937Z",
+  "method": "field-wise cumulative action frames, then one-second last observation carried forward",
+  "sources": [
+    "recordings/devnet/18213979/scores.ndjson",
+    "recordings/devnet/18213979/historical.ndjson"
+  ],
+  "output": "recordings/devnet/18213979/timeline-1s.ndjson",
+  "canonicalFrames": 1184,
+  "duplicatesRemoved": 1179,
+  "kickoffTsMs": 1783803600000,
+  "endTsMs": 1783813602487,
+  "totalSeconds": 10003,
+  "firstObservedSecond": 1,
+  "unknownSeconds": 0,
+  "terminalPhase": 10,
+  "complete": true
+}
