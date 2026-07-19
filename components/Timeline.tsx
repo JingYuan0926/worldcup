@@ -13,7 +13,7 @@ import {
   mmss,
   type Side,
 } from "@/lib/demo";
-import type { BetEvent } from "@/lib/crowdSim";
+import type { SecondCrowd } from "@/lib/crowdSim";
 
 const LANE_H = 84;
 const RULER_H = 40;
@@ -47,8 +47,8 @@ interface Props {
   now: number | null;
   /** Real events revealed so far. */
   revealed: number;
-  /** Every stake placed, at its match second — aggregated into candles here. */
-  bets: BetEvent[];
+  /** Sparse per-second crowd (count + stake) for each lane. */
+  crowd: { home: SecondCrowd; away: SecondCrowd };
   /**
    * Laid over the video rather than on the page. The canvas surfaces defer to
    * the strip's own background, the outer frame goes, and the labels darken —
@@ -58,40 +58,59 @@ interface Props {
 }
 
 /**
- * The crowd as candles: one bar per time slice, from pre-aggregated stake totals
- * (see the `candles` memo). Height is normalised to the lane's own peak, and empty
- * slices render as gaps — which is what makes zoomed-in betting read as discrete
- * moments rather than a smooth wash.
+ * The crowd, drawn per-second on a canvas. A sparse match holds thousands of
+ * possible timestamps per lane; a canvas renders them all without spawning a DOM
+ * node each, so zooming in resolves individual seconds and zooming out clusters
+ * them into a dense texture. Height is normalised to the lane's own peak.
  */
-function CrowdLane({ values, color }: { values: number[]; color: string }) {
-  const max = useMemo(() => Math.max(...values, Number.EPSILON), [values]);
-  const empty = max <= Number.EPSILON;
+function CrowdLane({ counts, color }: { counts: number[]; color: string }) {
+  const ref = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+
+    const draw = () => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      const ratio = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.max(1, Math.round(rect.width * ratio));
+      canvas.height = Math.max(1, Math.round(rect.height * ratio));
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      let max = 1;
+      for (const c of counts) if (c > max) max = c;
+      const n = counts.length;
+      const step = rect.width / Math.max(1, n - 1);
+      const barW = Math.max(0.7, Math.min(2.4, step));
+      const usable = rect.height * 0.92;
+
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = color;
+      for (let s = 0; s < n; s++) {
+        const c = counts[s]!;
+        if (c <= 0) continue;
+        const h = Math.max(2, (c / max) * usable);
+        const x = Math.min(rect.width - barW, s * step);
+        ctx.fillRect(x, rect.height - h, barW, h);
+      }
+    };
+
+    draw();
+    const ro = new ResizeObserver(draw);
+    ro.observe(canvas);
+    return () => ro.disconnect();
+  }, [counts, color]);
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        pointerEvents: "none",
-        display: "flex",
-        alignItems: "flex-end",
-        gap: 1,
-        paddingRight: 1,
-      }}
-    >
-      {values.map((v, i) => (
-        <div
-          key={i}
-          style={{
-            flex: 1,
-            height: v <= 0 || empty ? 0 : `${Math.max(4, (v / max) * 68)}%`,
-            background: color,
-            opacity: 0.3,
-            borderRadius: "2px 2px 0 0",
-          }}
-        />
-      ))}
-    </div>
+    <canvas
+      ref={ref}
+      aria-hidden="true"
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
+    />
   );
 }
 
@@ -104,7 +123,7 @@ export function Timeline({
   onSelect,
   now,
   revealed,
-  bets,
+  crowd,
   overlay = false,
 }: Props) {
   const [zoom, setZoom] = useState(1);
@@ -116,29 +135,14 @@ export function Timeline({
   const dragRef = useRef<string | null>(null);
 
   /**
-   * Candle resolution follows the zoom: more slots as you zoom in, so each candle
-   * shrinks from minutes toward seconds. Slot count rises with zoom while the ruler
-   * widens with zoom too, so a candle stays a roughly constant pixel width.
+   * Hover aggregates over a window that shrinks with zoom — a couple of minutes
+   * zoomed out, down to ~15 seconds zoomed in — so the readout is never a lone,
+   * usually-empty second while the bars stay at full per-second resolution.
    */
-  const slots = Math.min(560, Math.max(24, Math.round(60 * zoom)));
-  const candles = useMemo(() => {
-    const step = MATCH_SECONDS / slots;
-    const mk = () => ({
-      stake: new Array<number>(slots).fill(0),
-      count: new Array<number>(slots).fill(0),
-    });
-    const home = mk();
-    const away = mk();
-    for (const bet of bets) {
-      let idx = Math.floor(bet.second / step);
-      if (idx < 0) idx = 0;
-      if (idx >= slots) idx = slots - 1;
-      const lane = bet.side === "home" ? home : away;
-      lane.stake[idx] += bet.stake;
-      lane.count[idx] += 1;
-    }
-    return { home, away, step };
-  }, [bets, slots]);
+  const hoverWindow = Math.max(
+    1,
+    Math.round(MATCH_SECONDS / Math.min(560, Math.max(24, Math.round(60 * zoom)))),
+  );
 
   const pctOf = (second: number) => (second / MATCH_SECONDS) * 100;
 
@@ -199,15 +203,16 @@ export function Timeline({
     <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 14 }}>
       {hover &&
         (() => {
-          const step = candles.step;
-          let idx = Math.floor(hover.second / step);
-          if (idx < 0) idx = 0;
-          if (idx >= slots) idx = slots - 1;
-          const winStart = Math.round(idx * step);
-          const winEnd = Math.max(winStart, Math.round((idx + 1) * step) - 1);
+          const winStart = Math.floor(hover.second / hoverWindow) * hoverWindow;
+          const winEnd = Math.min(MATCH_SECONDS, winStart + hoverWindow - 1);
+          const sum = (arr: number[]) => {
+            let total = 0;
+            for (let s = winStart; s <= winEnd; s++) total += arr[s] ?? 0;
+            return total;
+          };
           const rows = [
-            { tm: HOME, stake: candles.home.stake[idx] ?? 0, ppl: candles.home.count[idx] ?? 0 },
-            { tm: AWAY, stake: candles.away.stake[idx] ?? 0, ppl: candles.away.count[idx] ?? 0 },
+            { tm: HOME, stake: sum(crowd.home.stake), ppl: sum(crowd.home.count) },
+            { tm: AWAY, stake: sum(crowd.away.stake), ppl: sum(crowd.away.count) },
           ];
           const totStake = rows.reduce((s, r) => s + r.stake, 0);
           const totPpl = rows.reduce((s, r) => s + r.ppl, 0);
@@ -323,7 +328,7 @@ export function Timeline({
                   }}
                 >
                   <CrowdLane
-                    values={side === "home" ? candles.home.stake : candles.away.stake}
+                    counts={side === "home" ? crowd.home.count : crowd.away.count}
                     color={t.color}
                   />
                 </div>

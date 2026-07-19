@@ -13,7 +13,7 @@ import { usePools } from "@/lib/usePools";
 import { FlashMarket } from "@/components/FlashMarket";
 import { useDemo } from "@/lib/useDemo";
 import { FLASH_DROP_SECOND, FLASH_POOL, GOAL_POOLS, NEVER_BUCKET, bucketRange } from "@/lib/pools";
-import { simulatedBets, type BetEvent } from "@/lib/crowdSim";
+import { crowdSeconds } from "@/lib/crowdSim";
 import {
   AWAY,
   FIXTURE,
@@ -45,16 +45,6 @@ const LOCK_TOTAL = 11 * 60 + 8;
 
 /** Same bucketing the chain settles on — see lib/pools.ts. */
 const bucketOfSecond = (second: number) => Math.min(18, Math.floor(second / 300));
-
-/** Deterministic 0..1 from a string — positions a bet within its settlement window. */
-function hash01(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return ((h >>> 0) % 100003) / 100003;
-}
 
 /** Inset around the timeline inside its strip over the video. */
 const PAD = 10;
@@ -171,27 +161,15 @@ export function MatchScreen() {
   }, [pools, publicKey, demo.resetting]);
 
   /**
-   * Every stake as an individual bet placed at a specific match second. Real goal
-   * entries are positioned deterministically inside their settled 5-minute window;
-   * corner/card tools have no pools, so their bets are simulated (lib/crowdSim.ts).
-   * The timeline aggregates these into candles at whatever resolution the zoom
-   * asks for — per-second when zoomed in, several minutes when zoomed out.
+   * The crowd histogram: sparse per-second picks for the selected tool, drawn on a
+   * canvas so every match second can carry its own bar (per-second zoomed in,
+   * clustering into minutes zoomed out). Presentation-only demo data
+   * (lib/crowdSim.ts) — the real money still lives in `pools`, read by the bet panel.
    */
-  const bets = useMemo<BetEvent[]>(() => {
-    const real: BetEvent[] = [];
-    for (const gp of GOAL_POOLS) {
-      const pool = pools[gp.poolIndex];
-      if (!pool) continue;
-      for (const e of pool.entries) {
-        if (e.guess < 0 || e.guess >= NEVER_BUCKET) continue;
-        const { start, end } = bucketRange(e.guess);
-        const sec = Math.round(start + (end - start) * hash01(`${e.wallet}:${gp.poolIndex}`));
-        real.push({ second: sec, side: gp.side, stake: e.stake });
-      }
-    }
-    if (tool === "goal" && real.length) return real;
-    return simulatedBets(tool);
-  }, [pools, tool]);
+  const crowd = useMemo(
+    () => ({ home: crowdSeconds(tool, "home"), away: crowdSeconds(tool, "away") }),
+    [tool],
+  );
 
   /**
    * The DEMO switcher is not just a view toggle any more — it drives the chain.
@@ -441,7 +419,7 @@ export function MatchScreen() {
       onSelect={setSelectedId}
       now={liveNow}
       revealed={revealed}
-      bets={bets}
+      crowd={crowd}
       overlay={overlay}
     />
   );
