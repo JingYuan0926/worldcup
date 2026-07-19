@@ -28,11 +28,17 @@ import {
 type Phase = "pre" | "live" | "settled";
 
 /**
- * Only goals are stakeable: they are the money path (lib/pools.ts). Corners and
- * cards still appear on the timeline as real events from the feed, but there is
- * no pool to call them into, so there is no tool to place one.
+ * Only goals are stakeable — they are the money path (lib/pools.ts), and
+ * `callsFrom` in BetPanel ignores every non-goal marker. The corner and card
+ * tools are here so the lane can be painted with the full match shape, but
+ * placing one is display-only: it never becomes a pool call.
  */
-const TOOLS: { kind: EventKind; label: string }[] = [{ kind: "goal", label: "Goal" }];
+const TOOLS: { kind: EventKind; label: string }[] = [
+  { kind: "goal", label: "Goal" },
+  { kind: "yellow", label: "Yellow" },
+  { kind: "red", label: "Red" },
+  { kind: "corner", label: "Corner" },
+];
 
 const LOCK_TOTAL = 11 * 60 + 8;
 
@@ -674,7 +680,9 @@ export function MatchScreen() {
                 </button>
               </div>
               <span style={{ fontSize: 10.5, color: C.muted }}>
-                settles {windowFor(selected.second).label} · ← → keys nudge
+                {selected.kind === "goal"
+                  ? `settles ${windowFor(selected.second).label} · ← → keys nudge`
+                  : "display only · ← → keys nudge"}
               </span>
               <button
                 onClick={() => selectedId && removeMarker(selectedId)}
