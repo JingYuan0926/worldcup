@@ -153,14 +153,12 @@ export function Timeline({
   const dragRef = useRef<string | null>(null);
 
   /**
-   * Hover aggregates over a window that shrinks with zoom — a couple of minutes
-   * zoomed out, down to ~15 seconds zoomed in — so the readout is never a lone,
-   * usually-empty second while the bars stay at full per-second resolution.
+   * Candle duration per zoom level — coarse zoomed out, toward per-second zoomed in:
+   * 1x = 5 min, 2x = 1 min, then 30s / 15s / 5s / 1s. Both the candle bars and the
+   * hover readout aggregate over this same window.
    */
-  const hoverWindow = Math.max(
-    1,
-    Math.round(MATCH_SECONDS / Math.min(560, Math.max(24, Math.round(60 * zoom)))),
-  );
+  const hoverWindow =
+    zoom < 1.5 ? 300 : zoom < 2.5 ? 60 : zoom < 3.5 ? 30 : zoom < 5 ? 15 : zoom < 6.5 ? 5 : 1;
 
   const pctOf = (second: number) => (second / MATCH_SECONDS) * 100;
 
