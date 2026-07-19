@@ -167,10 +167,15 @@ function build(kind: Kind, side: Side): SecondCrowd {
     const lateInterest = 0.28 + t * 0.38;
     const centerInterest = profile.centers.reduce((sum, c) => sum + gaussian(second, c), 0);
     const interest = lateInterest + centerInterest;
-    const chance = Math.min(0.22, profile.density * interest);
+    // Denser crowd: more populated seconds and more picks each, so every candle
+    // carries real weight rather than a handful of stray bets.
+    const chance = Math.min(0.6, profile.density * interest * 2.6);
     if (randomAt(seed, second, 0x6d2b_79f5) >= chance) continue;
 
-    const ceiling = Math.max(2, Math.min(profile.peakCount - 1, Math.round(1 + profile.countScale * interest)));
+    const ceiling = Math.max(
+      3,
+      Math.min(profile.peakCount + 8, Math.round(2 + profile.countScale * 1.7 * interest)),
+    );
     // Squaring the draw keeps most populated seconds at one or two picks, with the
     // occasional taller bar instead of a dense artificial-looking wall.
     const draw = randomAt(seed, second, 0xa511_e9b3);
