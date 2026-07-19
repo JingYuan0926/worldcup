@@ -13,7 +13,7 @@ import {
   mmss,
   type Side,
 } from "@/lib/demo";
-import { bucketRange } from "@/lib/pools";
+import { bucketLabel, bucketOf, bucketRange } from "@/lib/pools";
 
 const LANE_H = 84;
 const RULER_H = 40;
@@ -169,6 +169,7 @@ export function Timeline({
   overlay = false,
 }: Props) {
   const [zoom, setZoom] = useState(1);
+  const [hover, setHover] = useState<{ px: number; second: number } | null>(null);
   const canvasBg = overlay ? "transparent" : C.white;
   const labelColor = overlay ? C.ink : C.muted;
   const faintColor = overlay ? C.ink2 : C.faint;
@@ -244,6 +245,13 @@ export function Timeline({
         <div className="v2-scroll-hide" style={{ flex: 1, overflowX: "auto", overflowY: "hidden" }}>
           <div
             ref={rulerRef}
+            onPointerMove={(e) => {
+              const el = rulerRef.current;
+              if (!el) return;
+              const r = el.getBoundingClientRect();
+              setHover({ px: e.clientX - r.left, second: secondAt(e.clientX) });
+            }}
+            onPointerLeave={() => setHover(null)}
             style={{ position: "relative", height: CANVAS_H, width: `${zoom * 100}%`, minWidth: "100%" }}
           >
             {(["home", "away"] as Side[]).map((side) => {
@@ -496,6 +504,109 @@ export function Timeline({
                 </span>
               </div>
             )}
+
+            {/*
+              Hover readout: how much the crowd staked in the window under the
+              cursor, split by lane (top = home, bottom = away) plus the total.
+            */}
+            {hover &&
+              (() => {
+                const b = bucketOf(hover.second);
+                const h = crowd.home[b] ?? 0;
+                const a = crowd.away[b] ?? 0;
+                const total = h + a;
+                const fmt = (base: number) => {
+                  const u = base / 1e6;
+                  return u >= 100 ? Math.round(u).toLocaleString() : u.toFixed(2);
+                };
+                return (
+                  <>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        bottom: 0,
+                        left: hover.px,
+                        width: 1,
+                        background: overlay ? C.ink2 : C.faint,
+                        pointerEvents: "none",
+                        zIndex: 6,
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: hover.px,
+                        top: 6,
+                        transform:
+                          hover.px > 190 ? "translateX(calc(-100% - 10px))" : "translateX(10px)",
+                        zIndex: 9,
+                        pointerEvents: "none",
+                        background: C.ink,
+                        color: C.white,
+                        borderRadius: 8,
+                        padding: "9px 11px",
+                        minWidth: 138,
+                        boxShadow: "0 10px 26px rgba(2,6,23,0.4)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          ...num,
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          opacity: 0.7,
+                          letterSpacing: "0.04em",
+                          marginBottom: 6,
+                        }}
+                      >
+                        {bucketLabel(b)}
+                      </div>
+                      {(
+                        [
+                          [HOME, h],
+                          [AWAY, a],
+                        ] as const
+                      ).map(([tm, v]) => (
+                        <div
+                          key={tm.code}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 14,
+                            fontSize: 11.5,
+                            marginBottom: 3,
+                          }}
+                        >
+                          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span
+                              style={{ width: 7, height: 7, borderRadius: "50%", background: tm.color }}
+                            />
+                            {tm.code}
+                          </span>
+                          <span style={{ ...num, fontWeight: 700 }}>{fmt(v)}</span>
+                        </div>
+                      ))}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 14,
+                          fontSize: 11.5,
+                          borderTop: "1px solid rgba(255,255,255,0.16)",
+                          marginTop: 5,
+                          paddingTop: 5,
+                        }}
+                      >
+                        <span style={{ opacity: 0.75 }}>Total</span>
+                        <span style={{ ...num, fontWeight: 800 }}>{fmt(total)} USDC</span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
           </div>
         </div>
 

@@ -55,7 +55,9 @@ export function eventCrowd(kind: EventKind, side: Side): number[] {
     const x = b / LAST;
     const base = Math.max(0, shape(kind, x));
     const wobble = 0.5 + 0.5 * Math.sin(seed * 1.9 + b * 2.17);
-    arr[b] = base * (0.65 + 0.7 * wobble) * 1000;
+    // Scaled to base units (micro-USDC) so the hover tooltip reads as plausible
+    // USDC per window (tens–hundreds), same unit as the real goal-pool stakes.
+    arr[b] = base * (0.65 + 0.7 * wobble) * 100_000;
   }
   return arr;
 }
