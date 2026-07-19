@@ -13,7 +13,7 @@ import {
   mmss,
   type Side,
 } from "@/lib/demo";
-import { bucketLabel, bucketOf, bucketRange } from "@/lib/pools";
+import type { BetEvent } from "@/lib/crowdSim";
 
 const LANE_H = 84;
 const RULER_H = 40;
@@ -47,10 +47,8 @@ interface Props {
   now: number | null;
   /** Real events revealed so far. */
   revealed: number;
-  /** Staked lamports per 5-minute bucket, per lane — read from the pools on-chain. */
-  crowd: { home: number[]; away: number[] };
-  /** Distinct bettors per 5-minute bucket, per lane. */
-  counts: { home: number[]; away: number[] };
+  /** Every stake placed, at its match second — aggregated into candles here. */
+  bets: BetEvent[];
   /**
    * Laid over the video rather than on the page. The canvas surfaces defer to
    * the strip's own background, the outer frame goes, and the labels darken —
@@ -59,74 +57,14 @@ interface Props {
   overlay?: boolean;
 }
 
-/** Slots across the lane. Fine enough to read as texture rather than blocks. */
-const CROWD_SLOTS = 220;
-
 /**
- * Turn per-bucket stake totals into a density curve sampled across the match clock.
- *
- * Two things this fixes over drawing one bar per bucket:
- *
- * 1. **Alignment.** Buckets are not equal width in time — 0–17 cover five minutes
- *    each, but 18 absorbs everything from 90' to full time, which on this fixture
- *    is 34 minutes. Nineteen equal-width bars therefore drift out of sync with the
- *    ruler above them. Sampling in TIME space puts every bar under the minute it
- *    describes.
- *
- * 2. **Honesty about size.** Plotting a wide bucket's total at the same width as a
- *    narrow one overstates it. What is plotted is stake per second, so the 34-minute
- *    bucket reads as the thin spread it is rather than a tower.
- *
- * The curve is interpolated and smoothed between bucket centres — a density plot of
- * real totals, not invented detail. Nothing is jittered: every wiggle is money.
+ * The crowd as candles: one bar per time slice, from pre-aggregated stake totals
+ * (see the `candles` memo). Height is normalised to the lane's own peak, and empty
+ * slices render as gaps — which is what makes zoomed-in betting read as discrete
+ * moments rather than a smooth wash.
  */
-function densityCurve(crowd: number[]): number[] {
-  const centres = crowd.map((stake, b) => {
-    const { start, end } = bucketRange(b);
-    const seconds = Math.max(1, end - start + 1);
-    return { t: (start + end) / 2, v: stake / seconds };
-  });
-  if (centres.length === 0) return [];
-
-  // Linear interpolation in time space…
-  const raw: number[] = [];
-  for (let i = 0; i < CROWD_SLOTS; i++) {
-    const t = ((i + 0.5) / CROWD_SLOTS) * MATCH_SECONDS;
-    let j = 0;
-    while (j < centres.length - 1 && centres[j + 1]!.t < t) j++;
-    const a = centres[j]!;
-    const b = centres[Math.min(j + 1, centres.length - 1)]!;
-    if (b.t === a.t || t <= a.t) raw.push(a.v);
-    else if (t >= b.t) raw.push(b.v);
-    else raw.push(a.v + ((b.v - a.v) * (t - a.t)) / (b.t - a.t));
-  }
-
-  // …then a light box blur, so the joins read as a curve instead of facets.
-  let cur = raw;
-  for (let pass = 0; pass < 3; pass++) {
-    cur = cur.map((_, i) => {
-      const l = cur[Math.max(0, i - 1)]!;
-      const c = cur[i]!;
-      const r = cur[Math.min(cur.length - 1, i + 1)]!;
-      return (l + 2 * c + r) / 4;
-    });
-  }
-  return cur;
-}
-
-/**
- * Where the money actually sits: staked USDC per moment of the match, across this
- * lane's goal pools.
- *
- * This used to be `crowdBars(seed)` — seeded noise shaped to look plausible. It is
- * now read from the pools' on-chain entries, which means an empty lane renders
- * empty. That is the honest state before anyone bets, and it is also the point:
- * the shape tells you whether your call is crowded or lonely, and a fake histogram
- * tells you nothing while implying everything.
- */
-function CrowdLane({ crowd, color }: { crowd: number[]; color: string }) {
-  const bars = useMemo(() => densityCurve(crowd), [crowd]);
-  const max = useMemo(() => Math.max(...bars, Number.EPSILON), [bars]);
+function CrowdLane({ values, color }: { values: number[]; color: string }) {
+  const max = useMemo(() => Math.max(...values, Number.EPSILON), [values]);
   const empty = max <= Number.EPSILON;
 
   return (
@@ -141,16 +79,15 @@ function CrowdLane({ crowd, color }: { crowd: number[]; color: string }) {
         paddingRight: 1,
       }}
     >
-      {bars.map((v, i) => (
+      {values.map((v, i) => (
         <div
           key={i}
           style={{
             flex: 1,
-            // Floor the height so a funded slot never renders as nothing.
-            height: empty ? 0 : `${Math.max(1.5, (v / max) * 68)}%`,
+            height: v <= 0 || empty ? 0 : `${Math.max(4, (v / max) * 68)}%`,
             background: color,
-            opacity: empty ? 0 : 0.28,
-            borderRadius: "1px 1px 0 0",
+            opacity: 0.3,
+            borderRadius: "2px 2px 0 0",
           }}
         />
       ))}
@@ -167,8 +104,7 @@ export function Timeline({
   onSelect,
   now,
   revealed,
-  crowd,
-  counts,
+  bets,
   overlay = false,
 }: Props) {
   const [zoom, setZoom] = useState(1);
@@ -178,6 +114,31 @@ export function Timeline({
   const faintColor = overlay ? C.ink2 : C.faint;
   const rulerRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<string | null>(null);
+
+  /**
+   * Candle resolution follows the zoom: more slots as you zoom in, so each candle
+   * shrinks from minutes toward seconds. Slot count rises with zoom while the ruler
+   * widens with zoom too, so a candle stays a roughly constant pixel width.
+   */
+  const slots = Math.min(560, Math.max(24, Math.round(60 * zoom)));
+  const candles = useMemo(() => {
+    const step = MATCH_SECONDS / slots;
+    const mk = () => ({
+      stake: new Array<number>(slots).fill(0),
+      count: new Array<number>(slots).fill(0),
+    });
+    const home = mk();
+    const away = mk();
+    for (const bet of bets) {
+      let idx = Math.floor(bet.second / step);
+      if (idx < 0) idx = 0;
+      if (idx >= slots) idx = slots - 1;
+      const lane = bet.side === "home" ? home : away;
+      lane.stake[idx] += bet.stake;
+      lane.count[idx] += 1;
+    }
+    return { home, away, step };
+  }, [bets, slots]);
 
   const pctOf = (second: number) => (second / MATCH_SECONDS) * 100;
 
@@ -238,10 +199,15 @@ export function Timeline({
     <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 14 }}>
       {hover &&
         (() => {
-          const b = bucketOf(hover.second);
+          const step = candles.step;
+          let idx = Math.floor(hover.second / step);
+          if (idx < 0) idx = 0;
+          if (idx >= slots) idx = slots - 1;
+          const winStart = Math.round(idx * step);
+          const winEnd = Math.max(winStart, Math.round((idx + 1) * step) - 1);
           const rows = [
-            { tm: HOME, stake: crowd.home[b] ?? 0, ppl: counts.home[b] ?? 0 },
-            { tm: AWAY, stake: crowd.away[b] ?? 0, ppl: counts.away[b] ?? 0 },
+            { tm: HOME, stake: candles.home.stake[idx] ?? 0, ppl: candles.home.count[idx] ?? 0 },
+            { tm: AWAY, stake: candles.away.stake[idx] ?? 0, ppl: candles.away.count[idx] ?? 0 },
           ];
           const totStake = rows.reduce((s, r) => s + r.stake, 0);
           const totPpl = rows.reduce((s, r) => s + r.ppl, 0);
@@ -268,7 +234,9 @@ export function Timeline({
             >
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
                 <span style={{ ...num, fontSize: 15, fontWeight: 700 }}>{mmss(hover.second)}</span>
-                <span style={{ ...num, fontSize: 10, color: C.muted }}>{bucketLabel(b)} window</span>
+                <span style={{ ...num, fontSize: 10, color: C.muted }}>
+                  {mmss(winStart)}–{mmss(winEnd)}
+                </span>
               </div>
               {rows.map(({ tm, stake, ppl }) => (
                 <div
@@ -354,7 +322,10 @@ export function Timeline({
                     overflow: "hidden",
                   }}
                 >
-                  <CrowdLane crowd={side === "home" ? crowd.home : crowd.away} color={t.color} />
+                  <CrowdLane
+                    values={side === "home" ? candles.home.stake : candles.away.stake}
+                    color={t.color}
+                  />
                 </div>
               );
             })}

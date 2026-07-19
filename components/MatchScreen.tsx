@@ -13,7 +13,7 @@ import { usePools } from "@/lib/usePools";
 import { FlashMarket } from "@/components/FlashMarket";
 import { useDemo } from "@/lib/useDemo";
 import { FLASH_DROP_SECOND, FLASH_POOL, GOAL_POOLS, NEVER_BUCKET, bucketRange } from "@/lib/pools";
-import { eventCrowd } from "@/lib/crowdSim";
+import { simulatedBets, type BetEvent } from "@/lib/crowdSim";
 import {
   AWAY,
   FIXTURE,
@@ -45,6 +45,16 @@ const LOCK_TOTAL = 11 * 60 + 8;
 
 /** Same bucketing the chain settles on — see lib/pools.ts. */
 const bucketOfSecond = (second: number) => Math.min(18, Math.floor(second / 300));
+
+/** Deterministic 0..1 from a string — positions a bet within its settlement window. */
+function hash01(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 100003) / 100003;
+}
 
 /** Inset around the timeline inside its strip over the video. */
 const PAD = 10;
@@ -161,50 +171,27 @@ export function MatchScreen() {
   }, [pools, publicKey, demo.resetting]);
 
   /**
-   * Staked lamports per bucket, per lane — the histogram behind each lane. Summed
-   * across that team's goal pools: the lane answers "when does ARG score", so all
-   * the ARG ordinals contribute to the same picture of where the crowd is.
-   * NEVER (bucket 20) is excluded — it has no position on a time axis.
+   * Every stake as an individual bet placed at a specific match second. Real goal
+   * entries are positioned deterministically inside their settled 5-minute window;
+   * corner/card tools have no pools, so their bets are simulated (lib/crowdSim.ts).
+   * The timeline aggregates these into candles at whatever resolution the zoom
+   * asks for — per-second when zoomed in, several minutes when zoomed out.
    */
-  const crowd = useMemo(() => {
-    const empty = () => Array.from({ length: NEVER_BUCKET }, () => 0);
-    const stake = { home: empty(), away: empty() };
-    const count = { home: empty(), away: empty() };
+  const bets = useMemo<BetEvent[]>(() => {
+    const real: BetEvent[] = [];
     for (const gp of GOAL_POOLS) {
       const pool = pools[gp.poolIndex];
       if (!pool) continue;
       for (const e of pool.entries) {
         if (e.guess < 0 || e.guess >= NEVER_BUCKET) continue;
-        stake[gp.side][e.guess] += e.stake;
-        count[gp.side][e.guess] += 1; // one entry = one bettor
+        const { start, end } = bucketRange(e.guess);
+        const sec = Math.round(start + (end - start) * hash01(`${e.wallet}:${gp.poolIndex}`));
+        real.push({ second: sec, side: gp.side, stake: e.stake });
       }
     }
-    return { stake, count };
-  }, [pools]);
-
-  /**
-   * The crowd curve follows the selected tool. Goals show the real on-chain
-   * staked crowd; corners and cards have no pools, so their "when people bet"
-   * curve is a deterministic simulation (lib/crowdSim.ts). Switching a tool swaps
-   * the shape on both lanes.
-   */
-  const displayCrowd = useMemo(() => {
-    const hasStake = crowd.stake.home.some((v) => v > 0) || crowd.stake.away.some((v) => v > 0);
-    if (tool === "goal" && hasStake) return crowd.stake;
-    return { home: eventCrowd(tool, "home"), away: eventCrowd(tool, "away") };
-  }, [tool, crowd]);
-
-  /**
-   * Bettor counts aligned with displayCrowd — real entry counts for goals, and a
-   * plausible count derived from the simulated stake (~18 USDC/person) for the
-   * corner/card tools that have no pools.
-   */
-  const displayCounts = useMemo(() => {
-    const hasStake = crowd.stake.home.some((v) => v > 0) || crowd.stake.away.some((v) => v > 0);
-    if (tool === "goal" && hasStake) return crowd.count;
-    const derive = (side: Side) => eventCrowd(tool, side).map((s) => Math.round(s / 18e6));
-    return { home: derive("home"), away: derive("away") };
-  }, [tool, crowd]);
+    if (tool === "goal" && real.length) return real;
+    return simulatedBets(tool);
+  }, [pools, tool]);
 
   /**
    * The DEMO switcher is not just a view toggle any more — it drives the chain.
@@ -454,8 +441,7 @@ export function MatchScreen() {
       onSelect={setSelectedId}
       now={liveNow}
       revealed={revealed}
-      crowd={displayCrowd}
-      counts={displayCounts}
+      bets={bets}
       overlay={overlay}
     />
   );
