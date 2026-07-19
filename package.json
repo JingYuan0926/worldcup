@@ -1,16 +1,19 @@
 {
-  "name": "exact-match",
-  "version": "0.0.1",
+  "name": "worldcup",
+  "version": "0.1.0",
   "private": true,
-  "description": "Precision prediction pools for the 2026 World Cup, settled trustlessly by TxLINE Merkle proofs on Solana.",
+  "description": "Exact Match — precision World Cup prediction pools on Solana, settled by TxLINE Merkle proofs.",
   "license": "MIT",
   "workspaces": [
     "packages/*",
     "services/ingest",
-    "services/settler",
-    "web"
+    "services/settler"
   ],
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
     "auth": "npm run auth --workspace services/ingest",
     "record": "npm run record --workspace services/ingest",
     "auto-record": "npm run auto-record --workspace services/ingest",
@@ -21,8 +24,27 @@
   "engines": {
     "node": ">=22"
   },
-  "overrides": {
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@exact-match/payout": "*",
+    "@solana/spl-token": "^0.4.15",
+    "@solana/wallet-adapter-base": "^0.9.27",
+    "@solana/wallet-adapter-react": "^0.15.39",
+    "@solana/wallet-adapter-react-ui": "^0.9.39",
+    "@solana/web3.js": "^1.98.4",
+    "bs58": "^6.0.0",
+    "next": "16.2.10",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
