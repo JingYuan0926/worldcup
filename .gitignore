@@ -6,12 +6,20 @@
 keypairs/
 .tokens/
 
-# raw recordings are irreplaceable but large & gitignored;
-# a single sample fixture is force-kept for CI replay tests (see recordings/.gitignore)
+# Recordings: commit the captured TxLINE data (scores/odds/timeline + meta) so the
+# submission shows real feed usage, but never the operational logs, daemon state,
+# lockfiles, or per-stream cursors.
 recordings/*
 !recordings/.gitignore
 !recordings/sample/
 !recordings/sample/**
+!recordings/devnet/
+recordings/devnet/*
+!recordings/devnet/*/
+recordings/devnet/*/*
+!recordings/devnet/*/*.ndjson
+!recordings/devnet/*/*.manifest.json
+!recordings/devnet/*/meta.json
 
 # deps & build
 node_modules/
