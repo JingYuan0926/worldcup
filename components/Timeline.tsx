@@ -232,6 +232,8 @@ export function Timeline({
           ];
           const totStake = rows.reduce((s, r) => s + r.stake, 0);
           const totPpl = rows.reduce((s, r) => s + r.ppl, 0);
+          // Nothing staked in this window — show no card, just the guide line.
+          if (totPpl === 0 && totStake === 0) return null;
           const usd = (base: number) => {
             const u = base / 1e6;
             return u >= 100 ? Math.round(u).toLocaleString() : u.toFixed(2);
@@ -255,9 +257,11 @@ export function Timeline({
             >
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
                 <span style={{ ...num, fontSize: 15, fontWeight: 700 }}>{mmss(hover.second)}</span>
-                <span style={{ ...num, fontSize: 10, color: C.muted }}>
-                  {mmss(winStart)}–{mmss(winEnd)}
-                </span>
+                {winEnd > winStart && (
+                  <span style={{ ...num, fontSize: 10, color: C.muted }}>
+                    {mmss(winStart)}–{mmss(winEnd)}
+                  </span>
+                )}
               </div>
               {rows.map(({ tm, stake, ppl }) => (
                 <div
