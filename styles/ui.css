@@ -13,7 +13,7 @@ body:has(.v2-root) > main {
 }
 
 body:has(.v2-root) {
-  background-color: #0a0e2c;
+  background-color: #ffffff;
 }
 
 .v2-root a {

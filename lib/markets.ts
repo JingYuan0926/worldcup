@@ -54,6 +54,22 @@ export interface MarketCard {
 
 export const CARDS: MarketCard[] = [
   {
+    // Live match recorded from the real TxLINE devnet feed (fixture 18257739).
+    fixtureId: 18257739,
+    comp: "Semi-final",
+    live: true,
+    clock: "11'",
+    homeName: "Spain",
+    homeFlag: "https://flagcdn.com/w80/es.png",
+    homeScore: "0",
+    awayName: "Argentina",
+    awayFlag: "https://flagcdn.com/w80/ar.png",
+    awayScore: "0",
+    volume: "—",
+    markets: "live · TxLINE feed",
+    spark: [3, 5, 4, 8, 7, 11, 10, 14, 16, 15, 19, 23],
+  },
+  {
     fixtureId: 18209181,
     comp: "Quarter-final",
     live: true,

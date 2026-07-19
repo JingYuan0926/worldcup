@@ -430,7 +430,7 @@ export function MatchScreen() {
     <div style={{ padding: "16px 26px 34px", display: "flex", flexDirection: "column", gap: 18 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <Link
-          href="/v2"
+          href="/"
           style={{ color: C.muted, fontSize: 13, fontWeight: 600, textDecoration: "none" }}
         >
           ← Markets
