@@ -20,12 +20,12 @@ Payout is an accuracy‑weighted parimutuel: winners (error ≤ the median error
 
 ## Markets
 
-Every pool is the **same on‑chain mechanism** ([`lib.rs`](./program/programs/exact-match/src/lib.rs)): you stake on an integer guess within a range, and at settlement the pot flows to whoever was closest to the real value. The only thing that differs between the two framings is what that integer *means*:
+Technically there is **one pool type** — the two‑lane timeline **WHEN pool** — and **COUNT is integrated inside it**, not a separate market. On‑chain it is a single generic `Pool` ([`lib.rs`](./program/programs/exact-match/src/lib.rs)): a numeric range where you stake on an integer guess and the pot flows to whoever is closest to the settled value.
 
-- **WHEN pools — the timeline markers (the main money markets).** Predict *which 5‑minute window* a team's Nth goal lands in. Each team's Nth goal is its own pool — *Argentina's 1st goal*, *Argentina's 2nd goal*, *Switzerland's 1st goal*, … — so placing the Nth marker on a lane is at once a call on **which ball** (the ordinal / "count") and **at what minute** (the window / "when"). The guess is a 5‑minute bucket index (0–18, or `NEVER` = 20).
-- **COUNT pools — the slider.** Predict a *quantity*, e.g. the in‑play Flash pool *"how many minutes is the match a draw?"*. The guess is the count itself.
+- **WHEN / the timeline (the market).** Predict *which 5‑minute window* a team's Nth goal lands in. Each team's Nth goal is its own pool — *Argentina's 1st goal*, *2nd goal*, *Switzerland's 1st goal*, … — so a marker on a lane is at once **which ball** (the ordinal) and **at what minute** (the window). The guess is a 5‑minute bucket index (0–18, or `NEVER` = 20) — which is itself a count, so counting is baked in.
+- **COUNT, integrated.** The very same pool answers a plain *quantity* question when the guess is read as a raw number instead of a time bucket — e.g. the in‑play Flash pool *"how many minutes is the match a draw?"*. Same account, same `enter → settle → claim` flow, same payout function — no separate pool type.
 
-Under the hood these are identical: one `Pool` account with a numeric range, one `enter(guess)` → `settle(actual)` → `claim()` flow, one payout function. Every pool is **independent** — its own escrow vault and its own liquidity (pot), seeded per `(fixture_id, pool_index)` — so *Argentina's 1st goal* holds a separate pot from *Argentina's 2nd goal*. The accuracy‑weighted payout is computed **on‑chain** in the program ([`payout.rs`](./program/programs/exact-match/src/payout.rs)) and mirrored byte‑for‑byte by the TypeScript `@exact-match/payout` package against a shared vector file. Full taxonomy: [Market types](./TECHNICAL.md#market-types).
+Every pool is **independent**: its own escrow vault and its own liquidity (pot), seeded per `(fixture_id, pool_index)`, so *Argentina's 1st goal* holds a separate pot from *Argentina's 2nd goal*. The accuracy‑weighted payout is computed **on‑chain** ([`payout.rs`](./program/programs/exact-match/src/payout.rs)) and mirrored byte‑for‑byte by the TypeScript `@exact-match/payout` package against a shared vector file. Full taxonomy: [Market types](./TECHNICAL.md#market-types).
 
 ## Architecture
 
