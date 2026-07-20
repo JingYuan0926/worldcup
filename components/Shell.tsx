@@ -99,8 +99,17 @@ function TopBar() {
       }}
     >
       <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/betman.png" alt="Betman" height={26} style={{ height: 26, width: "auto", display: "block" }} />
+        <span
+          style={{
+            fontSize: 18,
+            fontWeight: 800,
+            letterSpacing: "-0.03em",
+            color: C.ink,
+            whiteSpace: "nowrap",
+          }}
+        >
+          Exact<span style={{ color: C.muted, fontWeight: 700 }}>Match</span>
+        </span>
       </Link>
       <div style={{ flex: 1 }} />
       <WalletButton />
