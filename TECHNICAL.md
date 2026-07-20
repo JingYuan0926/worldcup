@@ -48,9 +48,19 @@ The outcome is computed by `minutesDrawn(...)`: walk the goal timeline and sum e
 
 **Honest caveat (from the code's own comment):** this market *fails* the "Provable" gate in README §5.1, which only admits a template that settles from ≤2 on-chain stat keys. Minutes-drawn cannot — the same 3–1 scoreline is reachable through wildly different tie durations, so it needs the whole goal timeline. Under the resolver it settles fine (the outcome is derived from the recorded feed like every other pool), but it could not become trustless under the current `validate_stat` design without a proof per goal.
 
-### On a "Burst" market
+### Burst markets (planned — not yet implemented)
 
-There is **no "Burst" market** — a case-insensitive search for `burst` returns zero matches anywhere in the codebase and in `README.md`. It is neither implemented nor specified; the only two pool kinds are COUNT and WHEN. Any "Burst"-style pool would be a purely future idea, so it is omitted here rather than fabricated.
+**Status: roadmap, not built.** There is no Burst market in the current codebase (a search for `burst` returns zero matches in the code and `README.md`); this section documents the intended design so the market taxonomy is complete and honest about status.
+
+Where **Pre-match** pools lock at kickoff and the **Flash** pool opens once mid-broadcast, **Burst markets are rapid, short-horizon in-play pools** that open and settle inside a live window of a few minutes — a "burst" of quick calls on the immediate next phase of play. Examples: *"How many corners between 70' and 75'?"*, *"Total goals in the next 5 minutes?"*
+
+A Burst pool would have to pass the same three gates the rest of the system enforces (README §5.1):
+
+- **Provable** — settles from ≤2 on-chain stat keys. A windowed COUNT is provable exactly like a WHEN bracket: two bracketing 5-minute stat proofs (the stat's value at the window start vs its end), so the outcome is `stat(end) − stat(start)`.
+- **Precision** — the answer is a **number** (a count over the window), never yes/no.
+- **Primitive** — entered with the existing COUNT slider; no new input flow.
+
+It reuses everything already built: the same `exact_match` program, the same accuracy-weighted payout function, and the same 5-minute settlement granularity. The only new pieces are (a) a pool whose `lock_ts` and window are set a few minutes ahead **in-play** rather than at kickoff, and (b) a settle path that CPIs two `validate_stat` proofs for the window's endpoints. Because on-chain roots are posted per 5-minute batch, the tightest *honest* Burst window is one 5-minute bucket — sub-5-minute "bursts" are not provable under the current TxLINE granularity and are a documented cut.
 
 ## TxLINE endpoints and SSE feeds
 
