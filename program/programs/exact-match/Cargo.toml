@@ -1,0 +1,25 @@
+[package]
+name = "exact-match"
+version = "0.1.0"
+description = "Exact Match — precision prediction pools, settled trustlessly"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "exact_match"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+
+[dependencies]
+anchor-lang = "0.31.1"
+anchor-spl = "0.31.1"
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

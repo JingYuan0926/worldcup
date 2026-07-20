@@ -1,0 +1,19 @@
+[toolchain]
+anchor_version = "0.31.1"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.devnet]
+exact_match = "9KKWfU1EB51EmBoiTusZ3J7h7b6JmHNa2aQujtJdZBen"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "devnet"
+wallet = "../keypairs/devnet.json"
+
+[scripts]
+test = "echo 'rust tests: cargo test -p exact-match'"
