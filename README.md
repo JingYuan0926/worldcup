@@ -8,9 +8,9 @@
 
 ## What it is
 
-Prediction markets normally depend on a human to decide the truth — an oracle, a vote, or an admin holding the funds — so settlement is slow and trust‑based. And yes/no betting is a coin flip; real fans make sharper calls (how many corners, which minute the goal comes).
+Today almost every prediction market is **binary** — yes/no, over/under — which flattens skill into a coin flip and pays the crowd, not the sharp caller. **Trepa** introduced *precision* markets to reward the good players instead: predict an exact value, and the most accurate players win the most. **Exact Match applies that same principle** to live World Cup football — call the exact number or the exact minute, and the pot flows to whoever was closest, not to whoever got a yes/no right. Real fans make sharper calls (how many corners, which minute the goal comes); this market rewards them for it.
 
-Exact Match is **Trepa‑style precision pools** on live World Cup matches, settled **trustlessly**:
+It also fixes the other weakness of prediction markets: they normally lean on a human to decide the truth — an oracle, a vote, or an admin holding the funds — so settlement is slow and trust‑based. Exact Match settles **trustlessly** from TxLINE cryptographic proofs, with no admin key:
 
 - Pools open before a match — *"Total corners in France vs Morocco?"* / *"Which 5‑minute window is Argentina's 1st goal?"* You stake devnet USDC on an exact number or time, and the pool **locks at kickoff**.
 - During play, the live TxLINE SSE feed drives the UI.
